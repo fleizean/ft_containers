@@ -155,28 +155,28 @@ namespace ft
 		 * @brief Vektörün başlangıç iteratörünü döndürür
 		 * Vektörün ilk elemanını gösteren bir iterator geri döndürür.
 		 * 
-		 * @return iterator / const_iterator
+		 * @return iterator & const_iterator
 		 */
 		iterator begin() { return iterator(this->_start); }
 		const_iterator begin() const { return const_iterator(this->_start); }
 		/**
 		 * @brief Vektörün sonunu döndürür
 		 * vektördeki son elemanın hemen sonrasına denk gelen, teorik bir elemanı işaret eden bir iterator döndürür.
-		 * @return iterator 
+		 * @return iterator & const_iterator
 		 */
 		iterator end() { return iterator(this->_end); }
 		const_iterator end() const { return const_iterator(this->_end); }
 		/**
 		 * @brief Ters başlangıca yönelik bir ters iterator döndürür
 		 * Bu, vektördeki son elemanı işaret eden bir ters iterator döndürür. (baştan ilk elemana doğru gider)
-		 * @return reverse_iterator 
+		 * @return reverse_iterator & const_reverse_iterator
 		 */
 		reverse_iterator rbegin() { return reverse_iterator(end()); }
 		const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
 		/**
 		 * @brief rbegin'in tam tersini döndürür
 		 * Baştan başlayıp sonra doğru giden reverse iterator döndürür
-		 * @return reverse_iterator 
+		 * @return reverse_iterator & const_reverse_iterator
 		 */
 		reverse_iterator rend() { return reverse_iterator(begin()); }
 		const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
@@ -266,8 +266,64 @@ namespace ft
 				this->_alloc.destroy(it);
 			this->_alloc.deallocate(prev_start, prev_capacity);
 		}
+
+
 		/* -- Element Access Area -- */
-			
+		/**
+		 * @brief Elemana ulaşmak için
+		 * Elemanın referansını geri döndürür
+		 * @param n erişilecek index değeri
+		 * @return reference & const_reference
+		 */
+		reference operator[](size_type n) { return *(this->begin() + n); }
+		const_reference operator[](size_type n) const { return *(this->begin() + n); }
+		/**
+		 * @brief Elemana ulaşmak için
+		 * Vektördeki n pozisyonundaki elemana referans döndürür. 
+		 * Fonksiyon, n'in geçerli öğelerin sınırları içinde olup olmadığını otomatik olarak kontrol eder 
+		 * ve geçerli değilse bir out_of_range istisnası fırlatır.
+		 * @param n erişilecek index değeri
+		 * @return reference & const_reference
+		 */
+		reference at(size_type n)
+		{
+			if (n >= size())
+				throw std::out_of_range("ft::vector");
+			return (*this)[n];
+		}
+		const_reference at(size_type n) const
+		{
+			if (n >= size())
+				throw std::out_of_range("ft::vector");
+			return (*this)[n];
+		}
+		/**
+		 * @brief İlk elemana ulaşmak için
+		 * İlk elemanın referansını geri döndürür
+		 * @return reference & const_reference
+		 */
+		reference front() { return *begin(); }
+		const_reference front() const { return *begin(); }
+		/**
+		 * @brief Son elemana ulaşmak için
+		 * Son elemanın referansını geri döndürür
+		 * @return reference & const_reference
+		 */
+		reference back() { return *(end() - 1); } // - 1 deme sebebimiz end en sondaki elemanın bir sonrakini gösterir yani (başlangıcı)
+		const_reference back() const { return *(end() - 1); }
+		
+
+		/* -- Modifiers -- */
+		/* 
+		Assign metodu, bir container'ın mevcut içeriğini tamamen siler ve yerine yeni bir içerik yerleştirir. 
+		Aşağıda farklı kullanımlarına örnekler verilmiştir:
+		range assign: Belirtilen başka bir range içeriğini mevcut container'a kopyalar.
+		fill assign: Container'ın tüm elemanlarını aynı bir değere eşitler.
+		initializer list assign: Değişken sayıda argüman alarak container'a değerler ata
+		
+		Daha detaylı incelemek için notion vector sayfası ziyaret edilmeli.
+		*/
+		
 		/**
 		 * @brief İçeriği temizle
 		 * Bu fonksiyon, vektörden tüm elemanları (vektörün bellek alanındaki kapasitesini) kaldırır ve vektörü boşaltır. Vektörün boyutu 0 olur.
