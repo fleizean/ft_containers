@@ -319,7 +319,7 @@ namespace ft
 		Aşağıda farklı kullanımlarına örnekler verilmiştir:
 		range assign: Belirtilen başka bir range içeriğini mevcut container'a kopyalar.
 		fill assign: Container'ın tüm elemanlarını aynı bir değere eşitler.
-		initializer list assign: Değişken sayıda argüman alarak container'a değerler ata
+		98 sürümünde yok -> initializer list assign: Değişken sayıda argüman alarak container'a değerler ata
 		
 		Daha detaylı incelemek için notion vector sayfası ziyaret edilmeli.
 		*/
@@ -328,12 +328,311 @@ namespace ft
 		 * @brief İçeriği temizle
 		 * Bu fonksiyon, vektörden tüm elemanları (vektörün bellek alanındaki kapasitesini) kaldırır ve vektörü boşaltır. Vektörün boyutu 0 olur.
 		 */
+		template <typename InputIterator>
+		void assign(InputIterator first, InputIterator last,
+			typename ft::enable_if<!ft::is_integral>InputIterator>::value>::type* = 0)
+		{
+			size_type n = ft::difference(first, last);
+			this->clear();
+			if (this->capacity() < n)
+			{
+				this->_alloc.deallocate(this->_start, this->capacity());
+				this->_start = this->_alloc.allocate(n);
+				this->_end = this->_start;
+				this->_end_capacity = this->_start + n;
+			}
+			while (n--)
+				this->_alloc.construct(this->_end++, *first++);
+		}
+		/**
+		 * @brief Fill assign
+		 * @param n 
+		 * @param val 
+		 */
+		void assign(size_type n, const value_type &val)
+		{
+			this->clear();
+			if (this-->capacity() < n)
+			{
+				this->_alloc.deallocate(this->_start, this->capacity());
+				this->_start = this->_alloc.allocate(n);
+				this->_end = this->_start;
+				this->_end_capacity = this->_start + n;
+			}
+			while (n--)
+				this->_alloc.construct(this->_end++, val);
+		}
+		/**
+		 * @brief Sona eleman ekler
+		 * Vektörün sonuna eleman eklemeye yarar.
+		 * @param val eklenecek eleman
+		 */
+		void push_back(const value_type &val)
+		{
+			if (this->_end == this->_end_capacity)
+			{
+				size_type capacity = this->capacity();
+				if(capacity == 0)
+				{
+					capacity = 1;
+				}
+				else
+					this->capacity() * 2;
+				this->reserve(capacity);
+			}
+			this->_alloc.construct(this->_end++, val);
+		}
+		/**
+		 * @brief En sonuncu elemanı siler
+		 * Vektörün sonunda yer alan elemanı siler.
+		 */
+		void pop_back()
+		{
+			this->_alloc.destroy(--this->_end);
+		}
+
+		/**
+		 * @brief Pozisyona girilen elementi ekler
+		 * Verilen posizyona elementi girer
+		 * @param pos pozisyon
+		 * @param value değer
+		 * @return iterator 
+		 */
+        iterator insert(iterator pos, const T& value)
+        {
+            difference_type diff = pos.get_ptr() - this->my_vector;
+            insert(pos, 1, value);
+            return iterator(begin() + diff);
+        }
+
+        /**
+         * @brief Aralıklı pozisyonlu ekleme
+         * vektöre verilen konumdan başlayarak, başka bir range'den gelen elemanları eklemek için kullanılır.
+		 * İlk parametre olarak eklenecek elemanların yerleştirileceği konum, ikinci parametre olarak eklenecek
+		 * range verilir. Eğer kapasite yetersiz kalırsa, reserve() fonksiyonu kullanılarak kapasite artırılır.
+		 * Bu fonksiyon ayrıca, vector'un boyutunu değiştirerek yeni eklenen elemanların da dahil edilmesini sağlar.
+         * @tparam InputIterator 
+         * @param pos 
+         * @param first 
+         * @param last 
+         */
+        template <class InputIterator>
+        void insert(iterator pos, typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type first, InputIterator last)
+        {
+            size_type n = 0;
+            size_type begin_to_pos = 0;
+            size_type pos_to_end = 0;
+            InputIterator Init = first;
+
+            while (Init != last)
+            {
+                Init++;
+                n++;
+            }
+            iterator it = this->begin();
+            while (it != pos)
+            {
+                begin_to_pos++;
+                it++;
+            }
+            while (it != this->end())
+            {
+                pos_to_end++;
+                it++;
+            }
+            if (this->my_size + n > this->my_capacity)
+                reserve(this->my_size + n);
+            size_type i = 0;
+            while (i < pos_to_end)
+            {
+                this->my_alloc.construct(&my_vector[begin_to_pos + n + pos_to_end - i - 1], my_vector[begin_to_pos + pos_to_end - i - 1]);
+                this->my_alloc.destroy(&my_vector[begin_to_pos + pos_to_end - i - 1]);
+                i++;
+            }
+            Init = first;
+            i = 0;
+            while (i < n)
+            {
+                this->my_alloc.construct(&my_vector[begin_to_pos + i], *Init);
+                Init++;
+                i++;
+            }
+            this->set_size(this->get_size() + n);
+        }
+
+        /**
+         * @brief N tane ekleme
+         * belirtilen pozisyona verilen değeri belirtilen sayıda (n) kez eklemek için kullanılır.
+		 * Bu işlem sonrasında vector'un boyutu, ekleme işlemi sonrasındaki yeni boyutuna eşitlenir. 
+		 * Fonksiyonun özellikle tek bir değeri tekrarlayarak ekleme işlemi yapmak için kullanıldığı 
+		 * durumlarda yararlı olabilir.
+         * @param pos 
+         * @param n 
+         * @param value 
+         */
+        void insert(iterator pos, size_type n, const T& value)
+        {
+            size_type begin_to_pos = 0;
+            size_type pos_to_end = 0;
+            size_type i = 0;
+            iterator it = begin();
+            while (it != pos)
+            {
+                begin_to_pos++;
+                it++;
+            }
+            while (it != this->end())
+            {
+                pos_to_end++;
+                it++;
+            }
+            if (this->my_size + n > this->my_capacity)
+                reserve(this->my_size + n);
+            while (i < pos_to_end)
+            {
+                this->my_alloc.construct(&my_vector[begin_to_pos + n + pos_to_end - i - 1], my_vector[begin_to_pos + pos_to_end - i - 1]);
+                this->my_alloc.destroy(&my_vector[begin_to_pos + pos_to_end - i - 1]);
+                i++;
+            }
+            i = 0;
+            while (i < n)
+            {
+                this->my_alloc.construct(&my_vector[begin_to_pos + i], value);
+                i++;
+            }
+            this->set_size(this->get_size() + n);
+        }
+		/**
+		 * @brief Bir elementi sil
+		 * Verilen pozisyondaki elementi siler.
+		 * @param position 
+		 * @return iterator 
+		 */
+		iterator erase(iterator position)
+		{
+			pointer pos = &(*position);
+			if (position + 1 != this->end())
+			{
+				for (pointer p = pos; p + 1 != this->_end; p++)
+				{
+					_alloc.destroy(p);
+					_alloc.construct(p, *(p + 1));
+				}
+			}
+			this->_end--;
+			_alloc.destroy(this->_end);
+			return iterator(pos);
+		}
+		/**
+		 * @brief Belirtilen aralıktaki elementleri siler
+		 * Verilen first ve last'ın aralığındaki elementleri siler.
+		 * @param first 
+		 * @param last 
+		 * @return iterator 
+		 */
+		iterator erase(iterator first, iterator last)
+		{
+			pointer p_first = &(*first);
+			pointer p_last = &(*last);
+			difference_type diff = p_last - p_first;
+
+			for (pointer p = p_first; p + diff != this->_end; p++)
+			{
+				this->_alloc.destroy(p);
+				this->_alloc.construct(p, *(p + diff));
+			}
+			for (size_type s = 0; s < static_cast<size_type>(diff); s++)
+			{
+				this->_end--;
+				this->_alloc.destroy(this->_end);
+			}
+			return iterator(p_first);
+		}
+		/**
+		 * @brief Swap contens
+		 * Bu metot, bir vektörün içeriğini, aynı türde bir başka vektör nesnesinin içeriğiyle
+		 * değiştirir. Yani, vektörler arasında bir içerik swap yapar.
+		 * @param x aynı türde başka bir vektör konteyner
+		 * Bu konteynerin içeriği ile takas edilecek olan başka bir konteyner.
+		 */
+		void swap(vector& x)
+		{
+			if (&x == this)
+				return ;
+
+			ft::swap(this->_start, x._start);
+			ft::swap(this->_end, x._end);
+			ft::swap(this->_end_capacity, x._end_capacity);
+		}
+		/**
+		 * @brief İçeriği temizle
+		 * Vector'deki tüm elemanları (ki bu elemanlar yok edilir), 
+		 * böylece konteynerin boyutu 0 olur.
+		 */
 		void clear()
 		{
 			while (this->_start != this->_end)
 				this->_alloc.destroy(--this->_end);
 		}
+
+		/* -- Alloc -- */
+		/**
+		 * @brief Get allocator
+		 * Allocater'ın bir kopyasını çevirir
+		 * @return allocator_type 
+		 */
+		allocator_type get_allocator() const
+		{
+			return this->_alloc;
+		}
 	};
+
+	/** -- Üye olmayan işlevler -- */
+	/**
+ 	* @brief Vektör için karşılaştırma operatörleri
+ 	* lhs ve rhs vektörleri arasında uygun karşılaştırma işlemi gerçekleştirir.
+ 	* @tparam T 
+ 	* @tparam Alloc 
+ 	* @param lhs vektörler, her ikisi de aynı şablon parametrelerine sahip. (operatörün sol tarafı)
+ 	* @param rhs (operatörün sağ tarafı)
+ 	* @return true 
+ 	* @return false 
+ 	*/
+	template <typename T, typename Alloc>
+	inline bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return lhs.size() == rhs.size() && ft::equal(lhs.begin(), lhs.end(), rhs.begin()); }
+
+	template <typename T, typename Alloc>
+	inline bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return !(lhs == rhs); }
+
+	template <typename T, typename Alloc>
+	inline bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()); }
+
+	template <typename T, typename Alloc>
+	inline bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return !(rhs < lhs); }
+
+	template <typename T, typename Alloc>
+	inline bool operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return rhs < lhs; }
+
+	template <typename T, typename Alloc>
+	inline bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
+	{ return !(lhs < rhs); }
+
+	/**
+	 * @brief Vektörlerin içeriklerini değiştirir
+	 * x ve y vektörlerinin içerikleri birbirleriyle değiştirilir.
+	 * @tparam T 
+	 * @tparam Alloc 
+	 * @param x Aynı türdeki diğer bir vektör container'ı.
+	 * @param y Aynı türdeki diğer bir vektör container'ı.
+	 */
+	template <typename T, typename Alloc>
+	void swap(vector<T, Alloc>& x, vector<T, Alloc>& y)
+	{ x.swap(y); }
 }
 
 #endif
