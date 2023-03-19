@@ -68,6 +68,6 @@ int main()
 	mapEqualRange(); 
 	std::cout<<"Map test finished"<<std::endl; 
 
-	/* while(1)
-		; */
+	// Leaks control
+	// while(1);
 }
